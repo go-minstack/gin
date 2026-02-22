@@ -1,0 +1,23 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/bin/
+
+# Test & coverage
+*.test
+*.out
+coverage.html
+
+# Go workspace artifacts
+/vendor/
+
+# Environment
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
