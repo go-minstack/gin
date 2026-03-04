@@ -2,6 +2,8 @@ package gin
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -17,7 +19,7 @@ type Config struct {
 }
 
 func newConfig() Config {
-	port := os.Getenv("MINSTACK_PORT")
+	port := firstEnv("MINSTACK_HTTP_PORT", "MINSTACK_PORT")
 	if port == "" {
 		port = "8080"
 	}
@@ -27,9 +29,32 @@ func newConfig() Config {
 	}
 }
 
-func NewServer(lc fx.Lifecycle) *gin.Engine {
+func firstEnv(keys ...string) string {
+	for _, k := range keys {
+		if v := os.Getenv(k); v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+func NewServer(lc fx.Lifecycle, log *slog.Logger) *gin.Engine {
 	cfg := newConfig()
-	r := gin.Default()
+
+	gin.DebugPrintRouteFunc = func(httpMethod, absolutePath, handlerName string, nuHandlers int) {
+		log.Debug("route registered",
+			"method", httpMethod,
+			"path", absolutePath,
+			"handler", handlerName,
+			"handlers", nuHandlers,
+		)
+	}
+	gin.DebugPrintFunc = func(format string, values ...interface{}) {
+		log.Debug(strings.TrimRight(fmt.Sprintf(format, values...), "\n"))
+	}
+
+	r := gin.New()
+	r.Use(requestLogger(log), recovery(log))
 
 	if origin, ok := os.LookupEnv("MINSTACK_CORS_ORIGIN"); ok {
 		corsConfig := cors.DefaultConfig()
@@ -50,6 +75,7 @@ func NewServer(lc fx.Lifecycle) *gin.Engine {
 
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
+			log.Info("listening", "address", addr)
 			go func() {
 				if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 					panic(err)
