@@ -41,12 +41,10 @@ func firstEnv(keys ...string) string {
 func NewServer(lc fx.Lifecycle, log *slog.Logger) *gin.Engine {
 	cfg := newConfig()
 
-	gin.DebugPrintRouteFunc = func(httpMethod, absolutePath, handlerName string, nuHandlers int) {
+	gin.DebugPrintRouteFunc = func(httpMethod, absolutePath, _ string, _ int) {
 		log.Info("route registered",
 			"method", httpMethod,
 			"path", absolutePath,
-			"handler", handlerName,
-			"handlers", nuHandlers,
 		)
 	}
 	gin.DebugPrintFunc = func(format string, values ...interface{}) {
