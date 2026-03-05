@@ -42,7 +42,7 @@ func NewServer(lc fx.Lifecycle, log *slog.Logger) *gin.Engine {
 	cfg := newConfig()
 
 	gin.DebugPrintRouteFunc = func(httpMethod, absolutePath, handlerName string, nuHandlers int) {
-		log.Debug("route registered",
+		log.Info("route registered",
 			"method", httpMethod,
 			"path", absolutePath,
 			"handler", handlerName,
